@@ -9185,7 +9185,7 @@ async function upload_asset(octokit, owner, repo, name, path, release_id, upload
     const assets = ["package.json", ];
  */
 async function upload_assets(octokit, owner, repo, tag_name, assets){
-    const asset_list = glob.GlobSync(assets);
+    const asset_list = glob.sync(assets);
 
     console.log(asset_list);
 
