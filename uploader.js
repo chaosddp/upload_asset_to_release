@@ -113,11 +113,17 @@ async function upload_asset(octokit, owner, repo, name, path, release_id, upload
 async function upload_assets(octokit, owner, repo, tag_name, assets){
     const asset_list = glob.GlobSync(assets);
 
+    console.log(asset_list);
+
+    var success = True;
+
     for(var i=0;i<asset_list.length;i++){
         var asset = asset_list[i];
         var name = path.basename(asset);
 
         var resp = await upload_asset(octokit, owner, repo, name, asset, release.id, release.upload_url);
+        
+        success = success && resp != null;
 
         console.log(resp);
     }
