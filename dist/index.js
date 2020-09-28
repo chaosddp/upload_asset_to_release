@@ -9162,9 +9162,9 @@ async function get_release(octokit, owner, repo, tag_name, default_latest = fals
     var release = null;
     var success = true;
     var result = null;
-
+    
     try {
-        if (!tag_name) {
+        if (!tag_name || tag_name == "") {
             // if not contains tag name then get latest release
             release = await get_latest_release(octokit, owner, repo);
         } else {
@@ -9226,7 +9226,7 @@ async function upload_assets(octokit, owner, repo, tag_name, assets) {
     const release_ret = get_release(octokit, owner, repo, tag_name);
 
     if(!release_ret[0]){
-        return [false, "Fail to get release."];
+        return [false, [release_ret[1]]];
     }
 
     const release = release_ret[1];
