@@ -16,10 +16,10 @@ async function run() {
     const result = await upload(octokit, owner, repo, tag_name, asset);
 
     if(result[0]){
-      core.setOutput("Success to upload asset(s) to target release");
+      console.log("Success to upload asset(s) to target release");
     }else{
       for(var i=0;i<result[1].length;i++){
-        core.setOutput(result[1][i]);
+        console.error(result[1][i]);
       }
       
       core.setFailed("Fail to upload asset.");
