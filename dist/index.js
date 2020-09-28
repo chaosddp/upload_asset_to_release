@@ -9191,10 +9191,10 @@ async function upload_assets(octokit, owner, repo, tag_name, assets){
         var asset = asset_list[i];
         var name = path.basename(asset);
 
-        await upload_asset(octokit, owner, repo, name, asset, release.id, release.upload_url);
-    }
+        var resp = await upload_asset(octokit, owner, repo, name, asset, release.id, release.upload_url);
 
-    console.log(release);
+        console.log(resp);
+    }
 }
 
 
