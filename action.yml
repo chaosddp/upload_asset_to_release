@@ -1,13 +1,24 @@
-name: 'Wait'
-description: 'Wait a designated number of milliseconds'
+name: 'Upload asset to a release.'
+description: 'Upload asset to specified release or latest one.'
 inputs:
-  milliseconds:  # id of input
-    description: 'number of milliseconds to wait'
+  repo:
+    description: 'Name of target repo.'
     required: true
-    default: '1000'
+  owner:
+    description: 'Owner of target repo.'
+    required: true
+  tag_name:  # name of release
+    description: 'tag_name of release, leave it empty if upload to latest one.'
+    required: false
+  token:
+    description: 'Access token to access Github api.'
+    required: true
+  asset:
+    description: 'Asset to upload, can accept a glob pattern to specified multiple files.'
+    required: true
 outputs:
-  time: # output will be available to future steps
-    description: 'The message to output'
+  download_urls:
+    description: 'Download urls that joint with \n.'
 runs:
   using: 'node12'
   main: 'dist/index.js'
