@@ -20,7 +20,17 @@ async function run() {
 
     const octokit = github.getOctokit(token);
 
-    await upload(octokit, owner, repo, tag_name, asset);
+    const result = await upload(octokit, owner, repo, tag_name, asset);
+
+    if(result[0]){
+      core.setOutput("Success to upload asset(s) to target release");
+    }else{
+      for(var i=0;i<result[1].length;i++){
+        core.setOutput(result[1][i]);
+      }
+      
+      core.setFailed("Fail to upload asset.");
+    }
 
   } catch (error) {
     core.setFailed(error.message);
@@ -9079,90 +9089,123 @@ const path = __webpack_require__(5622);
 const STATUS_OK = 200;
 
 
-function response_to_release(resp){
+function response_to_release(resp) {
+    var success = true;
+    var result = null;
+
     // check reponse status
-    if(resp == null || resp.status != 200){
-        return null;
+    if (resp == null || resp.status != 200) {
+        success = false;
+        
+        if(resp == null){
+            result = "Invalid response of release api."
+        }else{
+            result = `Api request not success, status code: ${resp.status}.`;
+        }
+    }
+    else {
+        // for release we only need following fields
+        // 1. upload_url: used for asset upload operation
+        // 2. tag: used for logging to show which release we are operating
+        // 3. name: for logging
+        // 4. id: for following operation
+        result = {
+            "upload_url": resp.data.upload_url,
+            "tag": resp.data.tag_name,
+            "name": resp.data.name,
+            "id": resp.data.id
+        };
     }
 
-    // for release we only need following fields
-    // 1. upload_url: used for asset upload operation
-    // 2. tag: used for logging to show which release we are operating
-    // 3. name: for logging
-    // 4. id: for following operation
-    return{
-        "upload_url": resp.data.upload_url,
-        "tag": resp.data.tag_name,
-        "name": resp.data.name,
-        "id": resp.data.id
-    };
+    return [success, result];
 }
 
 // get latest release
-async function get_latest_release(octokit, owner, repo){
-    try{
-        return await octokit.repos.getLatestRelease({
+async function get_latest_release(octokit, owner, repo) {
+    var success = true;
+    var result = null;
+
+    try {
+        result = await octokit.repos.getLatestRelease({
             owner: owner,
             repo: repo
         });
     }
-    catch(err){
-        console.info("get latest release.");
-        console.error(err.message);
+    catch (err) {
+        success = false;
+        result = err.message;
     }
 
-    return null;
+    return [success, result];
 }
 
-async function get_release_by_tag(octokit, owner, repo, tag_name){
-    try{
-        return await octokit.repos.getReleaseByTag({
+async function get_release_by_tag(octokit, owner, repo, tag_name) {
+    var success = true;
+    var result = null;
+
+    try {
+        result = await octokit.repos.getReleaseByTag({
             owner: owner,
             repo: repo,
             tag: tag_name
         });
     }
-    catch(err){
-        console.log(err.message);
+    catch (err) {
+        success = false;
+        result = err.message;
     }
 
-    return null;
+    return [success, result];
 }
 
-async function get_release(octokit, owner, repo, tag_name, default_latest = false){
+async function get_release(octokit, owner, repo, tag_name, default_latest = false) {
     var release = null;
+    var success = true;
+    var result = null;
 
-    try{
-        if(!tag_name){
+    try {
+        if (!tag_name) {
             // if not contains tag name then get latest release
             release = await get_latest_release(octokit, owner, repo);
-        }else{
-            try{
+        } else {
+            try {
                 // try to get release by name first
                 release = await get_release_by_tag(octokit, owner, repo, tag_name);
-            }catch(err){
-                console.log(err.message);
+            } catch (err) {
+                success = false;
+                result = err.message;
 
-                if(default_latest)
-                {
+                if (default_latest) {
+                    success = true;
+                    result = null;
+
                     // then try to use latest if enabled
                     release = await get_latest_release(octokit, owner, repo);
                 }
             }
         }
-    }catch(err){
-        console.log(err.message);
+    } catch (err) {
+        success = false;
+        result = err.message;
+
+    }
+
+    if(release){
+        return [success, result];
     }
 
     return response_to_release(release);
 }
 
 
-async function upload_asset(octokit, owner, repo, name, path, release_id, upload_url){
-    try{
+async function upload_asset(octokit, owner, repo, name, path, release_id, upload_url) {
+    var success = true;
+    var result = null;
+    
+    try {
         const data = fs.readFileSync(path);
 
-        return await octokit.repos.uploadReleaseAsset({
+        result = await octokit.repos.uploadReleaseAsset({
             owner: owner,
             repo: repo,
             name: name,
@@ -9170,37 +9213,49 @@ async function upload_asset(octokit, owner, repo, name, path, release_id, upload
             origin: upload_url,
             data: data
         });
-    }catch(err){
-        console.error(err.message);
+    } catch (err) {
+        success = true;
+        result = err.message;
     }
 
-    return null;
+    return [success, result];
 }
 
-/**
-    const owner = "chaosddp";
-    const repo = "get_release_by_tag";
-    const tag_name = null;
 
-    const assets = ["package.json", ];
- */
-async function upload_assets(octokit, owner, repo, tag_name, assets){
+async function upload_assets(octokit, owner, repo, tag_name, assets) {
+    const release_ret = get_release(octokit, owner, repo, tag_name);
+
+    if(!release_ret[0]){
+        return [false, "Fail to get release."];
+    }
+
+    const release = release_ret[1];
+
+    console.log(`Got release, name: ${release.name}, tag: ${release.tag}. `);
+
     const asset_list = glob.sync(assets);
 
-    console.log(asset_list);
+    var success = true;
+    var result = [];
 
-    var success = True;
-
-    for(var i=0;i<asset_list.length;i++){
+    for (var i = 0; i < asset_list.length; i++) {
         var asset = asset_list[i];
         var name = path.basename(asset);
 
-        var resp = await upload_asset(octokit, owner, repo, name, asset, release.id, release.upload_url);
-        
-        success = success && resp != null;
+        console.log(`Uploading file: ${asset}.`);
 
-        console.log(resp);
+        var part_result = await upload_asset(octokit, owner, repo, name, asset, release.id, release.upload_url);
+
+        success = success && part_result[0];
+
+        result.push(part_result);
+
+        if(!success){
+            break;
+        }
     }
+
+    return [success, result];
 }
 
 

@@ -13,7 +13,17 @@ async function run() {
 
     const octokit = github.getOctokit(token);
 
-    await upload(octokit, owner, repo, tag_name, asset);
+    const result = await upload(octokit, owner, repo, tag_name, asset);
+
+    if(result[0]){
+      core.setOutput("Success to upload asset(s) to target release");
+    }else{
+      for(var i=0;i<result[1].length;i++){
+        core.setOutput(result[1][i]);
+      }
+      
+      core.setFailed("Fail to upload asset.");
+    }
 
   } catch (error) {
     core.setFailed(error.message);
