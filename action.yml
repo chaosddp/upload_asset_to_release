@@ -16,9 +16,6 @@ inputs:
   asset:
     description: 'Asset to upload, can accept a glob pattern to specified multiple files.'
     required: true
-outputs:
-  download_urls:
-    description: 'Download urls that joint with \n.'
 runs:
   using: 'node12'
   main: 'dist/index.js'
