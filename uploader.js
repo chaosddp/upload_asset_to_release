@@ -101,9 +101,7 @@ async function upload_asset(octokit, owner, repo, name, path, release_id, upload
 }
 
 async function upload_assets(octokit, owner, repo, tag_name, assets){
-    const release = get_release(octokit, owner, repo, tag_name);
-
-    console.log(release);
+    const release = await get_release(octokit, owner, repo, tag_name);
 
     if(release == null){
         console.error(`Fail to get release.`);
