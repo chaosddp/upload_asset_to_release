@@ -11,7 +11,14 @@ async function run() {
     const token = core.getInput("token");
     const asset = core.getInput("asset");
 
+    console.log(repo);
+    console.log(owner);
+    console.log(asset);
+    console.log(tag_name);
+
     const octokit = github.getOctokit(token);
+
+    console.log(octokit);
 
     const success = await upload(octokit, owner, repo, tag_name, asset);
 
