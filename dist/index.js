@@ -9188,7 +9188,7 @@ async function upload_assets(octokit, owner, repo, tag_name, assets){
         return false;
     }
 
-    const asset_list = glob.GlobSync(assets);
+    const asset_list = glob.sync(assets);
 
     if(asset_list.length < 1){
         console.error(`Cannot find files that match ${assets}.`);
